@@ -59,7 +59,9 @@ def compute_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray
     Returns:
         An numpy array of shape (2, ) (same shape as w), containing the gradient of the loss at w.
     """
-    error = y - tx @ w
+    prediction = np.where(tx @ w > 0, 1, -1)
+    error = y - prediction
+    print(tx.shape, error.shape)
     return -np.mean(tx.T @ error)
 
 
@@ -93,11 +95,6 @@ def mean_squared_error_gd(
         # update the weight vector
         w = w - gamma * gradient
         losses.append(loss)
-        print(
-            "GD iter. {bi}/{ti}: loss={l}, w0={w0}, w1={w1}".format(
-                bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]
-            )
-        )
     return w, losses[-1]
 
 
@@ -115,7 +112,8 @@ def compute_stoch_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.n
 
     n = len(y)
     rand_idx = np.random.randint(0, n)
-    error = y - tx @ w
+    prediction = np.where(tx @ w > 0, 1, -1)
+    error = y - prediction
     return -(tx[rand_idx].T * error[rand_idx])
 
 
@@ -147,12 +145,6 @@ def mean_squared_error_sgd(
         # update the weight vector
         w = w - gamma * gradient
         losses.append(loss)
-
-        print(
-            "SGD iter. {bi}/{ti}: loss={l}, w0={w0}, w1={w1}".format(
-                bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]
-            )
-        )
     return w, losses[-1]
 
 
