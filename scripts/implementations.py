@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List
+from typing import Tuple
 
 def compute_mse_loss(y, tx, w) -> float:
     """
@@ -10,7 +10,7 @@ def compute_mse_loss(y, tx, w) -> float:
     return 0.5 * np.mean(error ** 2)
 
 
-def least_squares(y: np.ndarray, tx: np.ndarray) -> List[np.ndarray, float]:
+def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
     """Calculate the least squares solution.
        returns mse, and optimal weights.
 
@@ -71,7 +71,7 @@ def mean_squared_error_gd(
     initial_w: np.ndarray,
     max_iters: np.ndarray,
     gamma: np.ndarray,
-) -> List[np.ndarray, float]:
+) -> Tuple[np.ndarray, float]:
     """The Gradient Descent (GD) algorithm.
 
     Args:
@@ -119,7 +119,7 @@ def compute_stoch_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.n
 
 def mean_squared_error_sgd(
     y: np.ndarray, tx: np.ndarray, initial_w: np.ndarray, max_iters: int, gamma: float
-) -> List[np.ndarray, float]:
+) -> Tuple[np.ndarray, float]:
     """The Stochastic Gradient Descent algorithm (SGD).
 
     Args:
@@ -200,7 +200,7 @@ def calculate_logistic_gradient(
 
 def logistic_regression(
     y: np.ndarray, tx: np.ndarray, initial_w: np.ndarray, max_iters: int, gamma: float
-) -> List[np.ndarray, float]:
+) -> Tuple[np.ndarray, float]:
     # init parameters
     threshold = 1e-8
     losses = []
@@ -226,7 +226,7 @@ def logistic_regression(
 
 def penalized_loss_and_gradient(
     y: np.ndarray, tx: np.ndarray, w: np.ndarray, lambda_: float
-) -> List[float, np.ndarray]:
+) -> Tuple[float, np.ndarray]:
     """return the loss and gradient.
 
     Args:
@@ -258,7 +258,7 @@ def reg_logistic_regression(
     initial_w: np.ndarray,
     max_iters: int,
     gamma: float,
-) -> List[np.ndarray, float]:
+) -> Tuple[np.ndarray, float]:
 
     # init parameters
     threshold = 1e-8
