@@ -1,7 +1,16 @@
 import numpy as np
 
 
-def least_squares(y, tx):
+def compute_mse_loss(y, tx, w) -> float:
+    """
+    calculates mse loss of categorical target y
+    """
+    prediction = np.where(tx @ w > 0, 1, -1)
+    error = y - prediction
+    return 0.5 * np.mean(error ** 2)
+
+
+def least_squares(y: np.ndarray, tx: np.ndarray) -> list[np.ndarray, float]:
     """Calculate the least squares solution.
        returns mse, and optimal weights.
 
@@ -12,17 +21,15 @@ def least_squares(y, tx):
     Returns:
         w: optimal weights, numpy array of shape(D,), D is the number of features.
         mse: scalar.
-
-    >>> least_squares(np.array([0.1,0.2]), np.array([[2.3, 3.2], [1., 0.1]]))
-    (array([ 0.21212121, -0.12121212]), 8.666684749742561e-33)
     """
     w = np.linalg.inv(tx.T @ tx) @ tx.T @ y
-    error = y - tx @ w
-    mse = 0.5 * np.mean(error.T @ error)
-    return w, mse
+    loss = compute_mse_loss(y, tx, w)
+    return w, loss
 
 
-def ridge_regression(y, tx, lambda_):
+def ridge_regression(
+    y: np.ndarray, tx: np.ndarray, lambda_: float
+) -> list[np.ndarray, float]:
     """implement ridge regression.
 
     Args:
@@ -32,27 +39,16 @@ def ridge_regression(y, tx, lambda_):
 
     Returns:
         w: optimal weights, numpy array of shape(D,), D is the number of features.
-
-    >>> ridge_regression(np.array([0.1,0.2]), np.array([[2.3, 3.2], [1., 0.1]]), 0)
-    array([ 0.21212121, -0.12121212])
-    >>> ridge_regression(np.array([0.1,0.2]), np.array([[2.3, 3.2], [1., 0.1]]), 1)
-    array([0.03947092, 0.00319628])
     """
     d = tx.shape[1]  # number of columns (i.e. variables)
     lambda_dash = lambda_ / (2 * len(y))
     w = np.linalg.inv(tx.T @ tx + lambda_dash * np.eye(d)) @ tx.T @ y
 
-    error = y - tx @ w
-    mse = 0.5 * np.mean(error.T @ error)
-    return w, mse
+    loss = compute_mse_loss(y, tx, w)
+    return w, loss
 
 
-def compute_mse_loss(y, tx, w) -> float:
-    error = y - tx @ w
-    return 0.5 * np.mean(error.T @ error)
-
-
-def compute_gradient(y, tx, w):
+def compute_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray:
     """Computes the gradient at w.
 
     Args:
@@ -67,7 +63,13 @@ def compute_gradient(y, tx, w):
     return -np.mean(tx.T @ error)
 
 
-def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
+def mean_squared_error_gd(
+    y: np.ndarray,
+    tx: np.ndarray,
+    initial_w: np.ndarray,
+    max_iters: np.ndarray,
+    gamma: np.ndarray,
+) -> list[np.ndarray, float]:
     """The Gradient Descent (GD) algorithm.
 
     Args:
@@ -82,7 +84,6 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
         ws: a list of length max_iters containing the model parameters as numpy arrays of shape (2, ), for each iteration of GD
     """
     # Define parameters to store w and loss
-    ws = [initial_w]
     losses = []
     w = initial_w
     for n_iter in range(max_iters):
@@ -91,19 +92,16 @@ def mean_squared_error_gd(y, tx, initial_w, max_iters, gamma):
 
         # update the weight vector
         w = w - gamma * gradient
-
-        # store w and loss
-        ws.append(w)
         losses.append(loss)
         print(
             "GD iter. {bi}/{ti}: loss={l}, w0={w0}, w1={w1}".format(
                 bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]
             )
         )
-    return ws, losses[-1]
+    return w, losses[-1]
 
 
-def compute_stoch_gradient(y, tx, w):
+def compute_stoch_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray:
     """Compute a stochastic gradient at w from just few examples n and their corresponding y_n labels.
 
     Args:
@@ -121,7 +119,9 @@ def compute_stoch_gradient(y, tx, w):
     return -(tx[rand_idx].T * error[rand_idx])
 
 
-def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
+def mean_squared_error_sgd(
+    y: np.ndarray, tx: np.ndarray, initial_w: np.ndarray, max_iters: int, gamma: float
+) -> list[np.ndarray, float]:
     """The Stochastic Gradient Descent algorithm (SGD).
 
     Args:
@@ -136,22 +136,16 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
         losses: a list of length max_iters containing the loss value (scalar) for each iteration of SGD
     """
 
-    # Define parameters to store w and loss
-    ws = [initial_w]
+    # Define parameters to w and loss
     losses = []
     w = initial_w
 
     for n_iter in range(max_iters):
         # calculate the loss and the gradient given the weight, w
-        loss, stoch_gradient = compute_mse_loss(y, tx, w), compute_stoch_gradient(
-            y, tx, w
-        )
+        loss, gradient = compute_mse_loss(y, tx, w), compute_stoch_gradient(y, tx, w)
 
         # update the weight vector
-        w = w - gamma * stoch_gradient
-
-        # store w and loss
-        ws.append(w)
+        w = w - gamma * gradient
         losses.append(loss)
 
         print(
@@ -159,10 +153,10 @@ def mean_squared_error_sgd(y, tx, initial_w, max_iters, gamma):
                 bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]
             )
         )
-    return ws, losses[-1]
+    return w, losses[-1]
 
 
-def sigmoid(t):
+def sigmoid(t: float) -> float:
     """
     apply sigmoid function on t.
 
@@ -175,7 +169,7 @@ def sigmoid(t):
     return np.exp(t) / (1 + np.exp(t))
 
 
-def calculate_nll_loss(y, tx, w):
+def calculate_nll_loss(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> float:
     """
     compute the cost by negative log likelihood.
 
@@ -185,7 +179,7 @@ def calculate_nll_loss(y, tx, w):
         w:  shape=(D, 1)
 
     Returns:
-        a non-negative loss
+        a non-negative loss: float
     """
     assert y.shape[0] == tx.shape[0]
     assert tx.shape[1] == w.shape[0]
@@ -194,7 +188,9 @@ def calculate_nll_loss(y, tx, w):
     return np.mean(loss)
 
 
-def calculate_logistic_gradient(y, tx, w):
+def calculate_logistic_gradient(
+    y: np.ndarray, tx: np.ndarray, w: np.ndarray
+) -> np.ndarray:
     """compute the gradient of loss.
 
     Args:
@@ -210,44 +206,81 @@ def calculate_logistic_gradient(y, tx, w):
     return gradient
 
 
-def learning_by_gradient_descent(y, tx, w, gamma):
-    """
-    Do one step of gradient descent using logistic regression. Return the loss and the updated w.
-
-    Args:
-        y:  shape=(N, 1)
-        tx: shape=(N, D)
-        w:  shape=(D, 1)
-        gamma: float
-
-    Returns:
-        loss: scalar number
-        w: shape=(D, 1)
-    """
-    loss, gradient = calculate_nll_loss(y, tx, w), calculate_logistic_gradient(y, tx, w)
-    w = w - gamma * gradient
-    return loss, w
-
-
-def logistic_regression_GD(y, x):
+def logistic_regression(
+    y: np.ndarray, tx: np.ndarray, initial_w: np.ndarray, max_iters: int, gamma: float
+) -> list[np.ndarray, float]:
     # init parameters
-    max_iter = 10000
     threshold = 1e-8
-    gamma = 0.5
     losses = []
-
-    # build tx
-    tx = np.c_[np.ones((y.shape[0], 1)), x]
-    w = np.zeros((tx.shape[1], 1))
+    w = initial_w
 
     # start the logistic regression
-    for iter in range(max_iter):
+    for iter in range(max_iters):
         # get loss and update w.
         loss, gradient = calculate_nll_loss(y, tx, w), calculate_logistic_gradient(
             y, tx, w
         )
         w = w - gamma * gradient
 
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        # converge criterion
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    return w, losses[-1]
+
+
+def penalized_loss_and_gradient(
+    y: np.ndarray, tx: np.ndarray, w: np.ndarray, lambda_: float
+) -> list[float, np.ndarray]:
+    """return the loss and gradient.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1)
+        lambda_: scalar
+
+    Returns:
+        loss: scalar number
+        gradient: shape=(D, 1)
+    """
+
+    assert y.shape[0] == tx.shape[0]
+    assert tx.shape[1] == w.shape[0]
+    n = len(y)
+    loss = calculate_nll_loss(y, tx, w)
+    loss += (w.T @ w).item() * lambda_
+
+    # calculate regularized gradient
+    gradient = tx.T @ (sigmoid(tx @ w) - y) / n + 2 * lambda_ * w
+    return loss, gradient
+
+
+def reg_logistic_regression(
+    y: np.ndarray,
+    tx: np.ndarray,
+    lambda_: float,
+    initial_w: np.ndarray,
+    max_iters: int,
+    gamma: float,
+) -> list[np.ndarray, float]:
+
+    # init parameters
+    threshold = 1e-8
+    losses = []
+    w = initial_w
+
+    # start the logistic regression
+    for iter in range(max_iters):
+        # get loss and update w.
+        _, gradient = penalized_loss_and_gradient(y, tx, w, lambda_)
+        loss, _ = calculate_nll_loss(
+            y, tx, w
+        )  # for recording losses, no penalty is added.
+        w = w - gamma * gradient
         # log info
         if iter % 100 == 0:
             print("Current iteration={i}, loss={l}".format(i=iter, l=loss))

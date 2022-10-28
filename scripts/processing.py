@@ -23,7 +23,7 @@ def clean_data(tx: np.ndarray, cap:float=0.95) -> np.ndarray:
     for i, variable in enumerate(cleaned.T):
         # replace outlier with variables mode.
         if len(variable[variable == -999.0]) > 0:
-            variable[(variable == -999.0)] = np.round(np.mean(variable[variable != -999.0]),2)
+            variable[(variable == -999.0)] = np.round(np.median(variable[variable != -999.0]),2)
         
         # cap outliers. (by given quantile - variable "cap")
         capped_value = np.quantile(variable, cap)
