@@ -61,7 +61,6 @@ def compute_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray
     """
     prediction = np.where(tx @ w > 0, 1, -1)
     error = y - prediction
-    print(tx.shape, error.shape)
     return -np.mean(tx.T @ error)
 
 
@@ -269,7 +268,7 @@ def reg_logistic_regression(
     for iter in range(max_iters):
         # get loss and update w.
         _, gradient = penalized_loss_and_gradient(y, tx, w, lambda_)
-        loss, _ = calculate_nll_loss(
+        loss = calculate_nll_loss(
             y, tx, w
         )  # for recording losses, no penalty is added.
         w = w - gamma * gradient
