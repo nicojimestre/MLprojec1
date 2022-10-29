@@ -29,7 +29,7 @@ def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
 
 def ridge_regression(
     y: np.ndarray, tx: np.ndarray, lambda_: float
-) -> list[np.ndarray, float]:
+) -> Tuple[np.ndarray, float]:
     """implement ridge regression.
 
     Args:
