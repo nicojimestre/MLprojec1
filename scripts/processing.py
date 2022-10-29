@@ -3,7 +3,7 @@ import numpy as np
 """Pre-processing functions used to clean our dataset"""
 """Use function pre_process_data"""
 
-def groupy_by_PRE_jet_num(X,y):
+def group_by_PRE_jet_num(X,y):
     """Group the data into four sets, depending on whether their PRI_jet_num is {0,1,2,3} 
     Return the four sets and their label"""
 
@@ -62,13 +62,11 @@ def standardize(x):
     x = x / std_x
     return x, mean_x, std_x
 
-  
-
 def pre_process_data(X,y):
     """Puts together all the pre-processing steps and returns the 2 processes datasets"""
 
     #group by jet_num
-    X_0, y_0, X_1, y_1, X_2, y_2, X_3, y_3 = groupy_by_PRE_jet_num(X,y)
+    X_0, y_0, X_1, y_1, X_2, y_2, X_3, y_3 = group_by_PRE_jet_num(X,y)
 
     #remove invalid features
     X_0 = clean_data(X_0)
