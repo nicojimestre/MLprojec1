@@ -5,7 +5,7 @@ from feature_expansion import *
 """Pre-processing functions used to clean our dataset"""
 """Use function pre_process_data"""
 
-def groupy_by_PRE_jet_num(X,y):
+def group_by_PRE_jet_num(X,y):
     """Group the data into four sets, depending on whether their PRI_jet_num is {0,1,2,3} 
     Return the four sets and their label"""
     #for i in range(0, len(X)):
