@@ -2,11 +2,11 @@
 
 #from scripts.feature_expansion import build_log_transformation
 import numpy as np
-from feature_expansion import *
-from implementations import *
 from itertools import product
-from typing import Tuple
-from metrics import *
+from metrics import f1_score
+from implementations import *
+from feature_expansion import *
+
 
 
 
@@ -32,12 +32,14 @@ class HyperParameterTuner:
 
         self.x = x
         self.y = y
-        self.num_seed = num_seed
-        self.num_folds = num_folds
-        self.max_iter = max_iter
+        self.model = available_models[model_name]
         self.model_name = model_name
-        
+        self.num_folds = num_folds
+        self.num_seed = num_seed
+        self.max_iter = max_iter
+
         # build k_indices
+        np.random.seed(self.num_seed)
         self.build_k_indices()
 
         # get model params given model specs.
