@@ -2,7 +2,7 @@
 
 import numpy as np
 from feature_expansion import *
-from implementations import mse_loss, ridge_regression
+from scripts.implementations import mse_loss, ridge_regression
 
 
 def build_k_indices(y, k_fold, seed=0):

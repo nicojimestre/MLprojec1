@@ -39,26 +39,10 @@ def ridge_regression(
         w: optimal weights, numpy array of shape(D,), D is the number of features.
     """
     d = tx.shape[1]  # number of columns (i.e. variables)
-    lambda_dash = lambda_ / (2 * len(y))
+    lambda_dash = 2 * len(y) * lambda_
     w = np.linalg.inv(tx.T @ tx + lambda_dash * np.eye(d)) @ tx.T @ y
     loss = mse_loss(y, tx, w)
     return w, loss
-
-
-def compute_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray:
-    """Computes the gradient at w.
-
-    Args:
-        y: numpy array of shape=(N, )
-        tx: numpy array of shape=(N,2)
-        w: numpy array of shape=(2, ). The vector of model parameters.
-
-    Returns:
-        An numpy array of shape (2, ) (same shape as w), containing the gradient of the loss at w.
-    """
-    prediction = np.where(tx @ w > 0, 1, -1)
-    error = y - prediction
-    return -np.mean(tx.T @ error)
 
 
 def mean_squared_error_gd(
@@ -83,37 +67,21 @@ def mean_squared_error_gd(
     """
     # Define parameters to store w and loss
     losses = []
-    w = initial_w
-
-    for _ in range(max_iters):
-        # calculate the loss and the gradient given the weight, w
-        loss, gradient = mse_loss(y, tx, w), compute_gradient(y, tx, w)
-        w = w - gamma * gradient
-        losses.append(loss)
+    w, n = initial_w, y.shape[0]
 
     if max_iters == 0:
-        return w, loss
-    else:
-        return w, losses[-1]
+        return w, mse_loss(y, tx, w)
 
-
-def compute_stoch_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray:
-    """Compute a stochastic gradient at w from just few examples n and their corresponding y_n labels.
-
-    Args:
-        y: numpy array of shape=(N, )
-        tx: numpy array of shape=(N,2)
-        w: numpy array of shape=(2, ). The vector of model parameters.
-
-    Returns:
-        A numpy array of shape (2, ) (same shape as w), containing the stochastic gradient of the loss at w.
-    """
-
-    n = len(y)
-    rand_idx = np.random.randint(0, n)
-    prediction = np.where(tx @ w > 0, 1, -1)
-    error = y - prediction
-    return -(tx[rand_idx].T * error[rand_idx])
+    for i in range(max_iters):
+        if i == 0:
+            losses.append(mse_loss(y, tx, w))
+        # calculate the loss and the gradient given the weight, w
+        error = y - tx @ w
+        gradient = -(tx.T @ error) / n
+        w = w - gamma * gradient
+        print(f"weight at {i+1} :{w}, grad: {gradient}")
+        losses.append(mse_loss(y, tx, w))
+    return w, losses[-1]
 
 
 def mean_squared_error_sgd(
@@ -132,16 +100,24 @@ def mean_squared_error_sgd(
         ws: a list of length max_iters containing the model parameters as numpy arrays of shape (2, ), for each iteration of SGD
         losses: a list of length max_iters containing the loss value (scalar) for each iteration of SGD
     """
-
-    # Define parameters to w and loss
     losses = []
-    w = initial_w
+    w, n = initial_w, y.shape[0]
 
-    for n_iter in range(max_iters):
-        # calculate the loss and the gradient given the weight, w
-        loss, gradient = mse_loss(y, tx, w), compute_stoch_gradient(y, tx, w)
+    if max_iters == 0:
+        return w, mse_loss(y, tx, w)
+
+    for i in range(max_iters):
+        if i == 0:  # calculate the first loss before updating
+            losses.append(mse_loss(y, tx, w))
+
+        # calculate the stochastic gradient.
+        error = y - tx @ w
+        rand_idx = np.random.randint(0, n)
+        gradient = -(tx[rand_idx].reshape(1, -1).T @ error[rand_idx].reshape(1, -1))
+
+        # update weight
         w = w - gamma * gradient
-        losses.append(loss)
+        losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 
 
@@ -223,22 +199,26 @@ def logistic_regression(
     losses = []
     w = initial_w
 
+    if max_iters == 0:
+        return w, calculate_nll_loss(y, tx, w)
+
     # start the logistic regression
-    for _ in range(max_iters):
-        # get loss and update w.
-        loss, gradient = calculate_nll_loss(y, tx, w), calculate_logistic_gradient(
-            y, tx, w
-        )
+    for i in range(max_iters):
+        if i == 0:  # calculate the first loss before updating
+            losses.append(calculate_nll_loss(y, tx, w))
+
+        # get gradient and update w.
+        gradient = calculate_logistic_gradient(y, tx, w)
         w = w - gamma * gradient
 
         # converge criterion
-        losses.append(loss)
+        losses.append(calculate_nll_loss(y, tx, w))
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     return w, losses[-1]
 
 
-def penalized_loss_and_gradient(
+def calculate_reg_logistic_gradient(
     y: np.ndarray, tx: np.ndarray, w: np.ndarray, lambda_: float
 ) -> Tuple[float, np.ndarray]:
     """return the loss and gradient.
@@ -257,21 +237,19 @@ def penalized_loss_and_gradient(
     assert y.shape[0] == tx.shape[0]
     assert tx.shape[1] == w.shape[0]
     n = len(y)
-    loss = calculate_nll_loss(y, tx, w)
-    loss += (w.T @ w).item() * lambda_
 
     # calculate regularized gradient
     gradient = tx.T @ (sigmoid(tx @ w) - y) / n + 2 * lambda_ * w
-    return loss, gradient
+    return gradient
 
 
 def reg_logistic_regression(
     y: np.ndarray,
     tx: np.ndarray,
+    lambda_: float,
     initial_w: np.ndarray,
     max_iters: int,
     gamma: float,
-    lambda_: float,
 ) -> Tuple[np.ndarray, float]:
 
     """
@@ -283,14 +261,14 @@ def reg_logistic_regression(
             input target
         tx: shape=(N, D)
             input features
+        lambda_: float,
+            L2-regularization parameter
         initial_w: shape=(D, 1)
             initial weight to be trained
         max_iters: int
             maximum number of iterations that you want to run the optimization.
         gamma : float
             step size for updating the weight
-        lambda_: float,
-            L2-regularization parameter
 
     Returns:
         (w, loss)
@@ -302,17 +280,20 @@ def reg_logistic_regression(
     losses = []
     w = initial_w
 
+    if max_iters == 0:
+        return w, calculate_nll_loss(y, tx, w)
+
     # start the logistic regression
-    for _ in range(max_iters):
+    for i in range(max_iters):
+        if i == 0:  # calculate the first loss before updating
+            losses.append(calculate_nll_loss(y, tx, w))
+
         # get loss and update w.
-        _, gradient = penalized_loss_and_gradient(y, tx, w, lambda_)
-        loss = calculate_nll_loss(
-            y, tx, w
-        )  # for recording losses, no penalty is added.
+        gradient = calculate_reg_logistic_gradient(y, tx, w, lambda_)
         w = w - gamma * gradient
 
         # converge criterion
-        losses.append(loss)
+        losses.append(calculate_nll_loss(y, tx, w))
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     return w, losses[-1]
