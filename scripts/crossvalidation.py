@@ -1,93 +1,154 @@
 """Cross Validation methods to optimize hyperparameters"""
 
+#from scripts.feature_expansion import build_log_transformation
 import numpy as np
 from feature_expansion import *
-from implementations import mse_loss, ridge_regression
+from implementations import *
+from itertools import product
+from typing import Tuple
+from metrics import *
 
 
-def build_k_indices(y, k_fold, seed=0):
-    """build k indices for k-fold.
 
-    Args:
-        y:      shape=(N,)
-        k_fold: K in K-fold, i.e. the fold num
-        seed:   the random seed
+class HyperParameterTuner:
+    def __init__(
+        self, 
+        x: np.ndarray, 
+        y: np.ndarray, 
+        model_name: str,
+        num_folds: int,
+        num_seed: int=0,
+        max_iter: int=100 
+    ):
 
-    Returns:
-        A 2D array of shape=(k_fold, N/k_fold) that indicates the data indices for each fold
+        available_models = {
+        'least_squares': least_squares,
+        'ridge': ridge_regression,
+        'mse_gd': mean_squared_error_gd,
+        'mse_sgd': mean_squared_error_sgd,
+        'logistic': logistic_regression,
+        'reg_logistic': reg_logistic_regression
+        }
 
-    >>> build_k_indices(np.array([1., 2., 3., 4.]), 2, 1)
-    array([[3, 2],
-           [0, 1]])
-    """
-    np.random.seed(seed)
+        self.x = x
+        self.y = y
+        self.num_seed = num_seed
+        self.num_folds = num_folds
+        self.max_iter = max_iter
+        self.model_name = model_name
+        
+        # build k_indices
+        self.build_k_indices()
 
-    num_row = y.shape[0]
-    interval = int(num_row / k_fold)
-    indices = np.random.permutation(num_row)
+        # get model params given model specs.
+        model_parameters = {
+            'least_squares': {}, 
+            'ridge'        : {'lambda_': None},
+            'mse_gd'       : {'initial_w': np.ones((len(y),1)), 'max_iters': self.max_iter, 'gamma': None},
+            'mse_sgd'      : {'initial_w': np.ones((len(y),1)), 'max_iters': self.max_iter, 'gamma': None},
+            'logistic'     : {'initial_w': np.ones((len(y),1)), 'max_iters': self.max_iter, 'gamma': None},
+            'reg_logistic' : {'initial_w': np.ones((len(y),1)), 'max_iters': self.max_iter, 'gamma': None, 'lambda_': None},
+        }
+        self.hyp_params = model_parameters[self.model_name]
+        self.model = available_models[self.model_name]
 
-    k_indices = [indices[k * interval : (k + 1) * interval] for k in range(k_fold)]
-    return np.array(k_indices)
+        self.degree = np.arange(3)
 
+    def tune_(self) -> Tuple[list, float]:
+        """
+        hyperparameter tuning done by grid search.
+        best parameters are found by finding the maximum f1 scores.
+        """
+        lambdas = np.logspace(-15,0,15)
+        gammas  = np.linspace(0,1,100)        
 
-def cross_validation(y, x, k_indices, k, lambda_, degree):
-    """return the loss of ridge regression."""
-    # get k'th subgroup in test, others in train
-    te_indice = k_indices[k]
-    tr_indice = k_indices[~(np.arange(k_indices.shape[0]) == k)]
-    tr_indice = tr_indice.reshape(-1)
-    y_te = y[te_indice]
-    y_tr = y[tr_indice]
-    x_te = x[te_indice]
-    x_tr = x[tr_indice]
-
-    # form data with polynomial degree
-    tx_tr = build_poly(x_tr, degree)
-    tx_te = build_poly(x_te, degree)
-    # ridge regression
-    w, _ = ridge_regression(y_tr, tx_tr, lambda_)
-    # calculate the loss for train and test data
-    loss_tr = np.sqrt(2 * mse_loss(y_tr, tx_tr, w))
-    loss_te = np.sqrt(2 * mse_loss(y_te, tx_te, w))
-    return loss_tr, loss_te, w
-
-
-def best_degree_selection(y, x, k_fold, seed=1):
-    degrees = np.arange(10)
-    lambdas = np.logspace(-15, 0, 16)
-
-    # split data in k fold
-    k_indices = build_k_indices(y, k_fold, seed)
-
-    # for each degree, we compute the best lambdas and the associated rmse
-    best_lambdas = []
-    best_rmses = []
-
-    # vary degree
-    for degree in degrees:
+        f1_scores = []
+        params = self.hyp_params
         # cross validation
-        rmse_te = []
-        for lambda_ in lambdas:
-            rmse_te_tmp = []
-            for k in range(k_fold):
-                _, loss_te, _ = cross_validation(y, x, k_indices, k, lambda_, degree)
-                rmse_te_tmp.append(loss_te)
-            rmse_te.append(np.mean(rmse_te_tmp))
+        if self.model_name == 'least_squares':
+            results = np.array([[k, self.cross_validation_per_k(k, self.hyp_params)[-1]] for k in range(self.num_folds)])
+            return results[np.argmax(results[:,-1])]   
+        
+        elif self.model_name == 'reg_logistic':
+            lambda_and_gammas = product(gammas, lambdas)
+            for (gamma, lambda_) in lambda_and_gammas:
+                params['gamma'], params['lambda_'] = gamma, lambda_
+                results = np.concatenate([self.cross_validation_per_k(k, params) for k in range(self.num_folds)], axis=0)
+                f1_scores.append(np.mean(results, axis=0))
+        
+            optimum_idx = np.argmax(f1_scores)
+            best_params, best_f1 = lambda_and_gammas[optimum_idx], f1_scores[optimum_idx]
+            return best_params, best_f1     
 
-        ind_lambda_opt = np.argmin(rmse_te)
-        best_lambdas.append(lambdas[ind_lambda_opt])
-        best_rmses.append(rmse_te[ind_lambda_opt])
+        elif self.model_name == 'ridge':
+            for lambda_ in lambdas:
+                params['lambda_'] =lambda_
+                results = np.concatenate([[self.cross_validation_per_k(k, params)] for k in range(self.num_folds)], axis=1)
+                f1_scores.append(np.mean(results, axis=0)[-1])
+                print("ended lambda", lambda_)
+                        
+            optimum_idx = np.argmax(f1_scores)
+            best_params, best_f1 = lambdas[optimum_idx], f1_scores[optimum_idx]
+            return best_params, best_f1     
+        else:
+            for gamma in gammas:
+                params['gamma'] = gamma
+                results = np.concatenate([self.cross_validation_per_k(k, params) for k in range(self.num_folds)], axis=0)
+                f1_scores.append(np.mean(results, axis=0)[-1])
+            
+            optimum_idx = np.argmax(f1_scores)
+            best_params, best_f1 = gammas[optimum_idx], f1_scores[optimum_idx]
+            return best_params, best_f1     
+        
 
-    ind_best_degree = np.argmin(best_rmses)
-    ind_best_lambda = np.argmin(best_rmses)
+    def cross_validation_per_k(self, k: int, params: dict):
+        """return the loss of given model."""
+        # get k'th subgroup in test, others in train
+        tr_indices, te_indices = self.k_indices[~(np.arange(self.k_indices.shape[0]) == k)].reshape(-1),\
+                                 self.k_indices[k]
+        
+        # split the data based on train and validation indices
+        y_trn, y_val = self.y[tr_indices], self.y[te_indices]
+        x_trn, x_val = self.x[tr_indices], self.x[te_indices]
 
-    print(
-        "Degree:",
-        degrees[ind_best_degree],
-        " Lambda:",
-        lambdas[ind_best_lambda],
-        " RMSE Training:",
-        best_rmses,
-    )
+        x_trn = build_poly(x_trn, self.degree)
+        x_val = build_poly(x_val, self.degree)
 
-    return [degrees[ind_best_degree], lambdas[ind_best_lambda], best_rmses]
+        x_trn_log = build_log_transformation(x_trn)
+        x_val_log = build_log_transformation(x_val)
+
+        x_trn = np.c_[x_trn, x_trn_log]
+        x_val = np.c_[x_val, x_val_log]
+
+        # run the model
+        params['tx'], params['y'] = x_trn, y_trn
+        w, _ = self.model(**params)
+        
+        # calculate the loss for train and test data
+        loss_trn = np.sqrt(mse_loss(y_trn, x_trn, w))
+        loss_val = np.sqrt(mse_loss(y_val, x_val, w))
+        
+        # get validation f1-score
+        y_pred = get_classification_pred(x_val, w)
+        f1_val = f1_score(y_val, y_pred)
+        return loss_trn, loss_val, f1_val
+
+    def build_k_indices(self):
+        """
+        build k indices for k-fold.
+        Args:
+            y:      shape=(N,)
+            k_fold: K in K-fold, i.e. the fold num
+            seed:   the random seed
+
+        Returns:
+            A 2D array of shape=(k_fold, N/k_fold) that indicates the data indices for each fold
+        """
+        num_row  = self.y.shape[0]
+        np.random.seed()
+        interval = int(num_row / self.num_folds)
+        indices  = np.random.permutation(num_row)
+
+        self.k_indices = np.array([indices[k * interval : (k + 1) * interval] for k in range(self.num_folds)])
+   
+

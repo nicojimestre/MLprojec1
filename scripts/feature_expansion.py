@@ -6,7 +6,7 @@ import math
 def build_poly(x, degree):
     """polynomial basis functions for input data x, for j=0 up to j=degree."""
     poly = np.ones((len(x), 0))
-    for deg in range(1, degree + 1):
+    for deg in degree:
         poly = np.c_[poly, np.power(x, deg)]
     return poly
 
@@ -18,7 +18,10 @@ def build_log_transformation(x):
     log = np.copy(x)
     for i in range(0, len(x[0])):
         log_column = x[:, i]
-        log_column = np.log(1 + log_column)
+        if(any(a<0 for a in log_column)):
+            log_column = np.log(1 + abs(min(log_column)) + log_column)
+        else :
+            log_column = np.log(1 + log_column)
         log[:, i] = log_column
     return log
 
@@ -45,11 +48,11 @@ def reciprocical_tansformation(x):
 
 def build_new_x(x):
     x_new = np.copy(x)
+
     x_new = np.concatenate((x_new, build_poly(x, 3)), axis=1)
     x_new = np.concatenate((x_new, build_log_transformation(x)), axis=1)
-    x_new = np.concatenate((x_new, square_root_tansformation(x)), axis=1)
-    x_new = np.concatenate((x_new, reciprocical_tansformation(x)), axis=1)
-
+    #x_new = np.concatenate((x_new, square_root_tansformation(x)), axis=1)
+    #x_new = np.concatenate((x_new, reciprocical_tansformation(x)), axis=1)
     # add a column of ones to the front
-    x_new = np.insert(x_new, [0], np.ones((x.shape[0], 1)), axis=1)
+    #x_new = np.insert(x_new, [0], np.ones((x.shape[0], 1)), axis=1)
     return x_new

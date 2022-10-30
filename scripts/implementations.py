@@ -4,6 +4,8 @@ from metrics import mse_loss
 
 
 def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
+    #print(len(w))
+    #print(tx.shape)
     pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
     return pred
 
@@ -20,7 +22,12 @@ def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
         w: optimal weights, numpy array of shape(D,), D is the number of features.
         mse: scalar.
     """
+    print(tx.shape)
+    #print(tx.T @ tx)
+    #print(np.count_nonzero(np.isnan(tx)))
+    #print(np.argwhere(np.isnan(tx)))
     w = np.linalg.inv(tx.T @ tx) @ tx.T @ y
+    #print("eoeoeoeoeo")
     loss = mse_loss(y, tx, w)
     return w, loss
 
@@ -79,7 +86,7 @@ def mean_squared_error_gd(
         error = y - tx @ w
         gradient = -(tx.T @ error) / n
         w = w - gamma * gradient
-        print(f"weight at {i+1} :{w}, grad: {gradient}")
+        #print(f"weight at {i+1} :{w}, grad: {gradient}")
         losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 
@@ -117,6 +124,9 @@ def mean_squared_error_sgd(
 
         # update weight
         w = w - gamma * gradient
+        print(len(losses))
+        print(mse_loss(y, tx, w).shape)
+        print(tx.shape)
         losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 

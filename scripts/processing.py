@@ -11,14 +11,32 @@ def group_by_PRE_jet_num(X, y):
 
     # create masks to extract the subsets
     # then, extract the elements from each subset
-    for pri_jet in [0, 1, 2, 3]:
+    """for pri_jet in [0, 1, 2, 3]:
         exec(f"mask_{pri_jet} = X[:,22] == {pri_jet}")
         exec(f"X_{pri_jet} = X[mask_{pri_jet},:]")
 
     # extract the corresponding labels
     if len(y) > 0:
         for pri_jet in [0, 1, 2, 3]:
-            exec(f"y_{pri_jet} = np.asarray(y[mask_{pri_jet}])")
+            exec(f"y_{pri_jet} = np.asarray(y[mask_{pri_jet}])")"""
+    #create masks to extract the subsets
+    mask_0 = X[:,22] == 0
+    mask_1 = X[:,22] == 1
+    mask_2 = X[:,22] == 2
+    mask_3 = X[:,22] == 3
+
+    #extract the elements from each subset
+    X_0 = X[mask_0,:]
+    X_1 = X[mask_1,:]
+    X_2 = X[mask_2,:]
+    X_3 = X[mask_3,:]
+
+    if(len(y)>0):
+        y_0 = np.asarray(y[mask_0])
+        y_1 = np.asarray(y[mask_1])
+        y_2 = np.asarray(y[mask_2])
+        y_3 = np.asarray(y[mask_3])
+
     return (
         X_0,
         y_0,
@@ -88,32 +106,34 @@ def standardize(x):
     return x
 
 
-# def pre_process_data(X,y, features: list):
-#     """Puts together all the pre-processing steps and returns the 2 processes datasets"""
-#     X_0, y_0, X_1, y_1, X_23, y_23 = group_by_PRE_jet_num(X,y)
+def pre_process_data(X,y, features: list):
+     """Puts together all the pre-processing steps and returns the 2 processes datasets"""
+     X_0, y_0, X_1, y_1, X_23, y_23 = group_by_PRE_jet_num(X,y)
+     #remove invalid features
+     X_0 = clean_data(X_0, features)
+     X_1 = clean_data(X_1, features)
+     X_23 = clean_data(X_23, features)
 
-#     #remove invalid features
-#     X_0 = clean_data(X_0, features)
-#     X_1 = clean_data(X_1, features)
-#     X_23 = clean_data(X_23, features)
+     # use feature engineering to get new Xs.
+     #X_0_extended = build_new_x(X_0)
+     #X_1_extended = build_new_x(X_1)
+     #X_23_extended = build_new_x(X_23)
 
-#     # use feature engineering to get new Xs.
-#     X_0_extended = build_new_x(X_0, features)
-#     X_1_extended = build_new_x(X_1, features)
-#     X_23_extended = build_new_x(X_23, features)
+     #standardize the subsets
+     #X_0[0:len(X_0), 0:len(X_0[0])] = standardize(X_0)
+     #X_1[0:len(X_1), 0:len(X_1[0])] = standardize(X_1)
+     #X_23[0:len(X_23), 0:len(X_23[0])] = standardize(X_23)
+     X_0 = standardize(X_0)
+     X_1 = standardize(X_1)
+     X_23 = standardize(X_23)
 
-#     #standardize the subsets
-#     X_0_extended[0:len(X_0), 0:len(X_0[0])] = standardize(X_0)
-#     X_1_extended[0:len(X_1), 0:len(X_1[0])] = standardize(X_1)
-#     X_23_extended[0:len(X_23), 0:len(X_23[0])] = standardize(X_23)
-
-#     #add a column of 1 to the subsets
-#     ones = np.ones([len(X_0), 1])
-#     X_0_extended = np.append(X_0_extended, ones, axis = 1)
-#     ones = np.ones([len(X_1), 1])
-#     X_1_extended = np.append(X_1_extended, ones, axis = 1)
-#     ones = np.ones([len(X_23), 1])
-#     X_23_extended = np.append(X_23_extended, ones, axis = 1)
+     #add a column of 1 to the subsets
+     ones = np.ones([len(X_0), 1])
+     X_0 = np.append(X_0, ones, axis = 1)
+     ones = np.ones([len(X_1), 1])
+     X_1 = np.append(X_1, ones, axis = 1)
+     ones = np.ones([len(X_23), 1])
+     X_23 = np.append(X_23, ones, axis = 1)
 
 
-#     return X_0_extended, y_0, X_1_extended, y_1, X_23_extended, y_23
+     return X_0, y_0, X_1, y_1, X_23, y_23
