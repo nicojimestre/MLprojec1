@@ -2,6 +2,7 @@ import numpy as np
 from typing import Tuple
 from scripts.metrics import mse_loss
 
+
 def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
     pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
     return pred
@@ -203,14 +204,14 @@ def logistic_regression(
             input features
         initial_w: shape=(D, 1)
             initial weight to be trained
-        max_iters: int 
+        max_iters: int
             maximum number of iterations that you want to run the optimization.
         gamma : float
             step size for updating the weight
 
     Returns:
         (w, loss)
-            a tuple consisting of final weight, vector of shape (D, 1) and mse loss 
+            a tuple consisting of final weight, vector of shape (D, 1) and mse loss
     """
     # init parameters
     threshold = 1e-8
@@ -279,16 +280,16 @@ def reg_logistic_regression(
             input features
         initial_w: shape=(D, 1)
             initial weight to be trained
-        max_iters: int 
+        max_iters: int
             maximum number of iterations that you want to run the optimization.
         gamma : float
             step size for updating the weight
         lambda_: float,
-            L2-regularization parameter 
+            L2-regularization parameter
 
     Returns:
         (w, loss)
-            a tuple consisting of final weight, vector of shape (D, 1) and mse loss 
+            a tuple consisting of final weight, vector of shape (D, 1) and mse loss
     """
 
     # init parameters
@@ -304,7 +305,7 @@ def reg_logistic_regression(
             y, tx, w
         )  # for recording losses, no penalty is added.
         w = w - gamma * gradient
-        
+
         # converge criterion
         losses.append(loss)
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
