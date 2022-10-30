@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Tuple
-from scripts.metrics import mse_loss
+from metrics import mse_loss
 
 
 def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
