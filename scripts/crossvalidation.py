@@ -18,7 +18,7 @@ class HyperParameterTuner:
         model_name: str,
         num_folds: int,
         num_seed: int=0,
-        max_iter: int=100 
+        max_iter: int=1000 
     ):
 
         available_models = {
@@ -52,7 +52,7 @@ class HyperParameterTuner:
         self.hyp_params = model_parameters[self.model_name]
         self.model = available_models[self.model_name]
 
-        self.degree = np.arange(3)
+        self.degree = np.arange(5)
 
     def tune_(self) -> Tuple[list, float]:
         """
@@ -73,7 +73,7 @@ class HyperParameterTuner:
             lambda_and_gammas = product(gammas, lambdas)
             for (gamma, lambda_) in lambda_and_gammas:
                 params['gamma'], params['lambda_'] = gamma, lambda_
-                results = np.concatenate([self.cross_validation_per_k(k, params) for k in range(self.num_folds)], axis=0)
+                results = np.concatenate([[self.cross_validation_per_k(k, params)] for k in range(self.num_folds)], axis=1)
                 f1_scores.append(np.mean(results, axis=0))
         
             optimum_idx = np.argmax(f1_scores)
@@ -93,7 +93,7 @@ class HyperParameterTuner:
         else:
             for gamma in gammas:
                 params['gamma'] = gamma
-                results = np.concatenate([self.cross_validation_per_k(k, params) for k in range(self.num_folds)], axis=0)
+                results = np.concatenate([[self.cross_validation_per_k(k, params)] for k in range(self.num_folds)], axis=1)
                 f1_scores.append(np.mean(results, axis=0)[-1])
             
             optimum_idx = np.argmax(f1_scores)
