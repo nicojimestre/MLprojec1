@@ -79,7 +79,6 @@ def mean_squared_error_gd(
         error = y - tx @ w
         gradient = -(tx.T @ error) / n
         w = w - gamma * gradient
-        print(f"weight at {i+1} :{w}, grad: {gradient}")
         losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 
