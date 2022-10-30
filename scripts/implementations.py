@@ -115,7 +115,9 @@ def mean_squared_error_sgd(
         gradient = -(tx[rand_idx].reshape(1, -1).T @ error[rand_idx].reshape(1, -1))
 
         # update weight
-        w = w - gamma * gradient
+        w = w - gamma * gradient.reshape(
+            -1,
+        )
         losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 
