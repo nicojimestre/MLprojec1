@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from helper import load_csv_data
+from scripts.helper import load_csv_data
 from processing import clean_data, standardize
 from crossvalidation import build_k_indices
 
