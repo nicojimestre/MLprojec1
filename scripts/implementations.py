@@ -1,13 +1,10 @@
 import numpy as np
 from typing import Tuple
+from metrics import mse_loss
 
-def compute_mse_loss(y, tx, w) -> float:
-    """
-    calculates mse loss of categorical target y
-    """
-    prediction = np.where(tx @ w > 0, 1, -1)
-    error = y - prediction
-    return 0.5 * np.mean(error ** 2)
+def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
+    pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
+    return pred
 
 
 def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
@@ -23,7 +20,7 @@ def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
         mse: scalar.
     """
     w = np.linalg.inv(tx.T @ tx) @ tx.T @ y
-    loss = compute_mse_loss(y, tx, w)
+    loss = mse_loss(y, tx, w)
     return w, loss
 
 
@@ -43,8 +40,7 @@ def ridge_regression(
     d = tx.shape[1]  # number of columns (i.e. variables)
     lambda_dash = lambda_ / (2 * len(y))
     w = np.linalg.inv(tx.T @ tx + lambda_dash * np.eye(d)) @ tx.T @ y
-
-    loss = compute_mse_loss(y, tx, w)
+    loss = mse_loss(y, tx, w)
     return w, loss
 
 
@@ -87,11 +83,9 @@ def mean_squared_error_gd(
     # Define parameters to store w and loss
     losses = []
     w = initial_w
-    for n_iter in range(max_iters):
+    for _ in range(max_iters):
         # calculate the loss and the gradient given the weight, w
-        loss, gradient = compute_mse_loss(y, tx, w), compute_gradient(y, tx, w)
-
-        # update the weight vector
+        loss, gradient = mse_loss(y, tx, w), compute_gradient(y, tx, w)
         w = w - gamma * gradient
         losses.append(loss)
     return w, losses[-1]
@@ -139,9 +133,7 @@ def mean_squared_error_sgd(
 
     for n_iter in range(max_iters):
         # calculate the loss and the gradient given the weight, w
-        loss, gradient = compute_mse_loss(y, tx, w), compute_stoch_gradient(y, tx, w)
-
-        # update the weight vector
+        loss, gradient = mse_loss(y, tx, w), compute_stoch_gradient(y, tx, w)
         w = w - gamma * gradient
         losses.append(loss)
     return w, losses[-1]
@@ -206,16 +198,13 @@ def logistic_regression(
     w = initial_w
 
     # start the logistic regression
-    for iter in range(max_iters):
+    for _ in range(max_iters):
         # get loss and update w.
         loss, gradient = calculate_nll_loss(y, tx, w), calculate_logistic_gradient(
             y, tx, w
         )
         w = w - gamma * gradient
 
-        # log info
-        if iter % 100 == 0:
-            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
         # converge criterion
         losses.append(loss)
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
@@ -265,16 +254,14 @@ def reg_logistic_regression(
     w = initial_w
 
     # start the logistic regression
-    for iter in range(max_iters):
+    for _ in range(max_iters):
         # get loss and update w.
         _, gradient = penalized_loss_and_gradient(y, tx, w, lambda_)
         loss = calculate_nll_loss(
             y, tx, w
         )  # for recording losses, no penalty is added.
         w = w - gamma * gradient
-        # log info
-        if iter % 100 == 0:
-            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        
         # converge criterion
         losses.append(loss)
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:

@@ -9,23 +9,20 @@ def build_poly(x, degree):
         poly = np.c_[poly, np.power(x, deg)]
     return poly
 
-def build_log_transformation(x, features) :
+def build_log_transformation(x) :
     """apply log transformation to the most skewed features of the dataset
     applying log(x+1) to avoid value of 0"""
 
     log = np.copy(x)
-    print(len(x[0]))
     for i in range(0, len(x[0])):
         log_column = x[:,i]
         log_column = np.log(1+log_column)
         log[:,i] = log_column
-
     return log
 
-def square_root_tansformation(x, features) :
+def square_root_tansformation(x) :
     """apply root transformation from 1/2 to 1/n 
     """
-
     sqrt = np.copy(x)
     for i in range(0,len(x[0])):
         sqrt_col = x[:,i]
@@ -33,7 +30,7 @@ def square_root_tansformation(x, features) :
         sqrt[:,i] = sqrt_col
     return sqrt
 
-def reciprocical_tansformation(x, features) :
+def reciprocical_tansformation(x) :
     """apply the inverse transformation  
     """
     inv = np.copy(x)
@@ -43,11 +40,13 @@ def reciprocical_tansformation(x, features) :
         inv[:,i] = inv_col
     return inv
 
-def build_new_x(x, features):
-    features = np.delete(features, features.index('PRI_jet_num'))
+def build_new_x(x):
     x_new = np.copy(x)
     x_new = np.concatenate((x_new, build_poly(x, 3)), axis=1)
-    x_new = np.concatenate((x_new, build_log_transformation(x, features)), axis = 1)
-    x_new = np.concatenate((x_new, square_root_tansformation(x, features)), axis=1)
-    x_new = np.concatenate((x_new, reciprocical_tansformation(x, features)), axis=1)
+    x_new = np.concatenate((x_new, build_log_transformation(x)), axis = 1)
+    x_new = np.concatenate((x_new, square_root_tansformation(x)), axis=1)
+    x_new = np.concatenate((x_new, reciprocical_tansformation(x)), axis=1)
+
+    # add a column of ones to the front
+    x_new = np.insert(x_new, [0], np.ones((x.shape[0],1)), axis=1)
     return x_new

@@ -1,10 +1,21 @@
 import numpy as np
-
 '''this file has functions that measure the performance of model. We have F1 score since
 the task of project is predict binary variable. 
 '''
 
+def mse_loss(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> float:
+    """
+    calculates mse loss of categorical target y
+    """
+    prediction = np.where(tx @ w > 0, 1, -1)
+    error = y - prediction
+    return 0.5 * np.mean(error ** 2)
+
+
 def f1_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    calculates f1 score of categorical target y
+    """
     # find actual positive, negative events
     positive_events, negative_events = (y_true == 1), (y_true == -1) 
 

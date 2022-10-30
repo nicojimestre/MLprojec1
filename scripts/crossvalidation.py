@@ -1,12 +1,10 @@
 """Cross Validation methods to optimize hyperparameters"""
 
 import numpy as np
-from implementations import *
 from feature_expansion import *
+from implementations import mse_loss, ridge_regression
 
-from implementations import compute_mse_loss, ridge_regression
-
-def build_k_indices(y, k_fold, seed):
+def build_k_indices(y, k_fold, seed=0):
     """build k indices for k-fold.
     
     Args:
@@ -21,10 +19,12 @@ def build_k_indices(y, k_fold, seed):
     array([[3, 2],
            [0, 1]])
     """
-    num_row = y.shape[0]
-    interval = int(num_row / k_fold)
     np.random.seed(seed)
-    indices = np.random.permutation(num_row)
+    
+    num_row  = y.shape[0]
+    interval = int(num_row / k_fold)
+    indices  = np.random.permutation(num_row)
+    
     k_indices = [indices[k * interval: (k + 1) * interval] for k in range(k_fold)]
     return np.array(k_indices)
 
@@ -45,13 +45,14 @@ def cross_validation(y, x, k_indices, k, lambda_, degree):
     # ridge regression
     w, _= ridge_regression(y_tr, tx_tr, lambda_)
     # calculate the loss for train and test data
-    loss_tr = np.sqrt(2 * compute_mse_loss(y_tr, tx_tr, w))
-    loss_te = np.sqrt(2 * compute_mse_loss(y_te, tx_te, w))
+    loss_tr = np.sqrt(2 * mse_loss(y_tr, tx_tr, w))
+    loss_te = np.sqrt(2 * mse_loss(y_te, tx_te, w))
     return loss_tr, loss_te,w
 
 def best_degree_selection(y, x, k_fold, seed = 1):
     degrees  = np.arange(10)
     lambdas = np.logspace(-15,0,16)
+
     # split data in k fold
     k_indices = build_k_indices(y, k_fold, seed)
     
