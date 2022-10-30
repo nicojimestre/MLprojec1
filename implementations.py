@@ -192,6 +192,26 @@ def calculate_logistic_gradient(
 def logistic_regression(
     y: np.ndarray, tx: np.ndarray, initial_w: np.ndarray, max_iters: int, gamma: float
 ) -> Tuple[np.ndarray, float]:
+    """
+    computes the final weight and mse loss under logistic regression.
+    Results may vary depending on the value of gamma.
+
+    Args:
+        y:  shape=(N, 1)
+            input target
+        tx: shape=(N, D)
+            input features
+        initial_w: shape=(D, 1)
+            initial weight to be trained
+        max_iters: int 
+            maximum number of iterations that you want to run the optimization.
+        gamma : float
+            step size for updating the weight
+
+    Returns:
+        (w, loss)
+            a tuple consisting of final weight, vector of shape (D, 1) and mse loss 
+    """
     # init parameters
     threshold = 1e-8
     losses = []
@@ -242,11 +262,34 @@ def penalized_loss_and_gradient(
 def reg_logistic_regression(
     y: np.ndarray,
     tx: np.ndarray,
-    lambda_: float,
     initial_w: np.ndarray,
     max_iters: int,
     gamma: float,
+    lambda_: float,
 ) -> Tuple[np.ndarray, float]:
+
+    """
+    computes the final weight and mse loss under logistic regression with regularization.
+    Results may vary depending on the value of gamma and lambda.
+
+    Args:
+        y:  shape=(N, 1)
+            input target
+        tx: shape=(N, D)
+            input features
+        initial_w: shape=(D, 1)
+            initial weight to be trained
+        max_iters: int 
+            maximum number of iterations that you want to run the optimization.
+        gamma : float
+            step size for updating the weight
+        lambda_: float,
+            L2-regularization parameter 
+
+    Returns:
+        (w, loss)
+            a tuple consisting of final weight, vector of shape (D, 1) and mse loss 
+    """
 
     # init parameters
     threshold = 1e-8
