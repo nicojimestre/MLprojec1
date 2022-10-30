@@ -65,7 +65,7 @@ def mean_squared_error_gd(
     y: np.ndarray,
     tx: np.ndarray,
     initial_w: np.ndarray,
-    max_iters: np.ndarray,
+    max_iters: int,
     gamma: np.ndarray,
 ) -> Tuple[np.ndarray, float]:
     """The Gradient Descent (GD) algorithm.
@@ -84,12 +84,17 @@ def mean_squared_error_gd(
     # Define parameters to store w and loss
     losses = []
     w = initial_w
+
     for _ in range(max_iters):
         # calculate the loss and the gradient given the weight, w
         loss, gradient = mse_loss(y, tx, w), compute_gradient(y, tx, w)
         w = w - gamma * gradient
         losses.append(loss)
-    return w, losses[-1]
+
+    if max_iters == 0:
+        return w, loss
+    else:
+        return w, losses[-1]
 
 
 def compute_stoch_gradient(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> np.ndarray:

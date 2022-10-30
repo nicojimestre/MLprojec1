@@ -9,8 +9,7 @@ def mse_loss(y: np.ndarray, tx: np.ndarray, w: np.ndarray) -> float:
     """
     calculates mse loss of categorical target y
     """
-    prediction = np.where(tx @ w > 0, 1, -1)
-    error = y - prediction
+    error = y - tx @ w
     return 0.5 * np.mean(error**2)
 
 
