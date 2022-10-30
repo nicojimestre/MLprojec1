@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Tuple
-from metrics import mse_loss
+from scripts.metrics import mse_loss
 
 def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
     pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
