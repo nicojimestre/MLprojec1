@@ -3,8 +3,10 @@ from typing import Tuple
 from metrics import mse_loss
 
 
-def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
-    pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
+def get_classification_pred(
+    tx: np.ndarray, w: np.ndarray, threshold: float = 0.5
+) -> np.ndarray:
+    pred = np.where(sigmoid(tx @ w) > threshold, 1, -1)
     return pred
 
 
