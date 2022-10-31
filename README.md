@@ -12,7 +12,6 @@ You will find more information about our source codes and methods in this readme
 - _Blanche Marion_
 - _Ki Beom Kim_
 
-
 ## Setting up
 
 This code was tested with Python 3.8 or higher and below is the list of libraries used for this project.
@@ -36,13 +35,12 @@ The folder structure has to be the following:
     ├── run.py            # runs the whole process and outputs submission.
     └── README.md
 
+### Used Methods
 
-### Used Methods 
+Below is the list of ML methods that we implemented. These can be found in `implementation.py`. Out of 6, `least_square`, `ridge_regression` use the normal equation whereas other 4 methods use optimization methods (in this case mostly gradient descent, SGD only for `least_squares_SGD`).
 
-Below is the list of ML methods that we implemented. These can be found in `implementation.py`. Out of 6, `least_square`, `ridge_regression` use the normal equation whereas other 4 methods use optimization methods (in this case mostly gradient descent, SGD only for `least_squares_SGD`). 
-
-| Function                  | Arguments                                                           |
-| ------------------------- | ------------------------------------------------------------------- |
+| Function                  | Arguments                                        |
+| ------------------------- | ------------------------------------------------ |
 | `least_squares_GD`        | `y, tx, initial_w, max_iters, gamma`             |
 | `least_squares_SGD`       | `y, tx, initial_w, batch_size, max_iters, gamma` |
 | `least_squares`           | `y, tx`                                          |
@@ -50,27 +48,23 @@ Below is the list of ML methods that we implemented. These can be found in `impl
 | `logistic_regression`     | `y, tx, initial_w, max_iters, gamma`             |
 | `reg_logistic_regression` | `y, tx, lambda_, initial_w, max_iters, gamma`    |
 
-The default values were chosen in order to get convergence on the GD algorithm.
-
 ### run.py
 
 `run.py` generates a csv file read for the submission. This file runs as the procedure shown below.:
 
 1. loading the `train.py`, `test.py`
 2. data cleaning:
-    - impute the missing values (shown as `-999`) with the median
-    - removing outliers by replacing it with 1.5 x 75%iles of the data
-    
+   - impute the missing values (shown as `-999`) with the median
+   - removing outliers by replacing it with 1.5 x 75%iles of the data
 3. Feature Engineering:
-    - polynomial expansion
-    - log-transformation
-    - sqaure-root transform
-    - reciprocal transform
+
+   - polynomial expansion
+   - log-transformation
+   - sqaure-root transform
+   - reciprocal transform
 
 4. using `HyperParameterTuner` to tune the hyperparameter of `ridge_regression` model. (hyperparameter: `lambda_`)
 
 5. obtain the weight vector w using the trained `lambda_`.
 
 6. get predictions and save the prediction as .csv format
-
-
