@@ -2,9 +2,9 @@ import json
 import numpy as np
 
 from helper import load_csv_data, create_csv_submission
-from processing import clean_data, standardize, build_poly
+from processing import clean_data, build_poly
 from implementations import ridge_regression, get_classification_pred
-from scripts.metrics import f1_score
+from metrics import f1_score
 
 
 if __name__ == "__main__":
@@ -34,19 +34,8 @@ if __name__ == "__main__":
     )
 
     # get train score
-    y_pred_tr = get_classification_pred(x_tr_extended @ weight_trained)
+    y_pred_tr = get_classification_pred(x_tr_extended, weight_trained)
     print(f"training f1 score: {f1_score(y_train, y_pred_tr)}")
 
-    y_test = get_classification_pred(x_tr_extended @ weight_trained)
-
-    print(y_test.shape)
-
-    # # check if there exists nan in both train and test data.
-    # assert np.isnan(x_tr_cleaned).sum() == 0, print(
-    #     "there exists nan in the train data. Exit process."
-    # )
-    # # assert np.isnan(x_te_cleaned).sum() == 0, \
-    # #     print('there exists nan in the test data. Exit process.')
-    # print("cleaning complete.")
-
-    # print(build_k_indices(y_train, 5))
+    y_test = get_classification_pred(x_tr_extended, weight_trained)
+    create_csv_submission(id_test, y_test, "submission.csv")
