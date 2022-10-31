@@ -2,21 +2,23 @@ from turtle import shape
 import numpy as np
 import math
 
+from numpy import NaN
+
 
 def build_poly(x, degree):
     """polynomial basis functions for input data x, for j=0 up to j=degree."""
     poly = np.ones((len(x), 0))
-    for deg in degree:
+    degree = int(degree)
+    for deg in range(1, degree+1):
         poly = np.c_[poly, np.power(x, deg)]
     return poly
 
-
-def build_log_transformation(x):
+def build_log_transformation(x, feature):
     """apply log transformation to the most skewed features of the dataset
     applying log(x+1) to avoid value of 0"""
 
     log = np.copy(x)
-    for i in range(0, len(x[0])):
+    for i in feature:
         log_column = x[:, i]
         if(any(a<0 for a in log_column)):
             log_column = np.log(1 + abs(min(log_column)) + log_column)
@@ -47,12 +49,8 @@ def reciprocical_tansformation(x):
 
 
 def build_new_x(x):
+    """puts together all the feature expansion methods and creates a new dataset"""
     x_new = np.copy(x)
-
     x_new = np.concatenate((x_new, build_poly(x, 3)), axis=1)
     x_new = np.concatenate((x_new, build_log_transformation(x)), axis=1)
-    #x_new = np.concatenate((x_new, square_root_tansformation(x)), axis=1)
-    #x_new = np.concatenate((x_new, reciprocical_tansformation(x)), axis=1)
-    # add a column of ones to the front
-    #x_new = np.insert(x_new, [0], np.ones((x.shape[0], 1)), axis=1)
     return x_new

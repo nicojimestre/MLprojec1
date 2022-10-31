@@ -3,12 +3,23 @@ from typing import Tuple
 from metrics import mse_loss
 
 
-def get_classification_pred(tx: np.ndarray, w: np.ndarray) -> np.ndarray:
     #print(len(w))
     #print(tx.shape)
-    pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
+    #pred = np.where(sigmoid(tx @ w) > 0.5, 1, -1)
+def get_classification_pred(
+    tx: np.ndarray, w: np.ndarray, threshold: float = 0.5
+    ) -> np.ndarray:
+    #sigmoid
+    pred = np.where(sigmoid(tx @ w) > threshold, 1, -1)
     return pred
 
+def predict_labels(weights, data):
+    """Generates class predictions given weights, and a test data matrix"""
+    y_pred = np.dot(data, weights)
+    y_pred[np.where(y_pred <= 0.5)] = -1
+    y_pred[np.where(y_pred > 0.5)] = 1
+    
+    return y_pred
 
 def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
     """Calculate the least squares solution.
@@ -22,12 +33,7 @@ def least_squares(y: np.ndarray, tx: np.ndarray) -> Tuple[np.ndarray, float]:
         w: optimal weights, numpy array of shape(D,), D is the number of features.
         mse: scalar.
     """
-    print(tx.shape)
-    #print(tx.T @ tx)
-    #print(np.count_nonzero(np.isnan(tx)))
-    #print(np.argwhere(np.isnan(tx)))
     w = np.linalg.inv(tx.T @ tx) @ tx.T @ y
-    #print("eoeoeoeoeo")
     loss = mse_loss(y, tx, w)
     return w, loss
 
@@ -86,7 +92,6 @@ def mean_squared_error_gd(
         error = y - tx @ w
         gradient = -(tx.T @ error) / n
         w = w - gamma * gradient
-        #print(f"weight at {i+1} :{w}, grad: {gradient}")
         losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 
@@ -124,9 +129,6 @@ def mean_squared_error_sgd(
 
         # update weight
         w = w - gamma * gradient
-        print(len(losses))
-        print(mse_loss(y, tx, w).shape)
-        print(tx.shape)
         losses.append(mse_loss(y, tx, w))
     return w, losses[-1]
 
@@ -307,3 +309,17 @@ def reg_logistic_regression(
         if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
             break
     return w, losses[-1]
+
+def ridge(y, tx, lambda_):
+    """implement ridge regression."""
+    x_t = np.transpose(tx)
+    N = tx.shape[0]
+    K = tx.shape[1]
+    Id = 2 * tx.shape[0] * lambda_ * np.identity(tx.shape[1])
+    one = np.dot(x_t,tx) + Id
+    two = np.dot(x_t,y)
+    
+    w = np.linalg.solve(one,two)
+    loss = mse_loss(y,tx,w)
+    
+    return w,loss 

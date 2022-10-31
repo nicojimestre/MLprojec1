@@ -1,3 +1,4 @@
+from feature_expansion import build_poly
 import numpy as np
 from feature_expansion import *
 
@@ -90,19 +91,24 @@ def clean_data(tx: np.ndarray, features: list) -> np.ndarray:
                 variable[(variable == -999.0)] = np.round(
                     np.median(variable[variable != -999.0]), 2
                 )
-        elif np.std(variable, axis=0) == 0:
+        #elif np.std(variable, axis=0) == 0:
+        elif np.all(variable == variable[0]):
             cleaned = np.delete(cleaned, j, axis=1)
             j -= 1
         j += 1
     return cleaned
 
 
-def standardize(x):
+def standardize_(x):
     """Standardizes the dataset i.e. substract the mean and divide by the standard deviation"""
     mean_x = np.mean(x, axis=0)
-    x = x - mean_x
     std_x = np.std(x, axis=0)
-    x = x / std_x
+    if std_x != 0 :
+        x = x - mean_x
+        x = x / std_x
+    else :
+        x = np.maximum(x) - np.minimum(x)
+
     return x
 
 
@@ -123,17 +129,61 @@ def pre_process_data(X,y, features: list):
      #X_0[0:len(X_0), 0:len(X_0[0])] = standardize(X_0)
      #X_1[0:len(X_1), 0:len(X_1[0])] = standardize(X_1)
      #X_23[0:len(X_23), 0:len(X_23[0])] = standardize(X_23)
-     X_0 = standardize(X_0)
-     X_1 = standardize(X_1)
-     X_23 = standardize(X_23)
+     
+     #X_0 = standardize(X_0)
+     #X_1 = standardize(X_1)
+     #X_23 = standardize(X_23)
 
      #add a column of 1 to the subsets
-     ones = np.ones([len(X_0), 1])
-     X_0 = np.append(X_0, ones, axis = 1)
-     ones = np.ones([len(X_1), 1])
-     X_1 = np.append(X_1, ones, axis = 1)
-     ones = np.ones([len(X_23), 1])
-     X_23 = np.append(X_23, ones, axis = 1)
+     #print(len(X_0))
+     #print(len(X_0[0]))
+     #ones = np.ones([len(X_0), 1])
+     #X_0 = np.append(ones, X_0, axis = 1)
+     #ones = np.ones([len(X_1), 1])
+     #X_1 = np.append(ones, X_1, axis = 1)
+     #ones = np.ones([len(X_23), 1])
+     #X_23 = np.append(ones, X_23, axis = 1)
 
 
      return X_0, y_0, X_1, y_1, X_23, y_23
+
+def pre_process_data_ws(X,y, features: list, degree_0, degree_1, degree_23):
+     """Puts together all the pre-processing steps and returns the 2 processes datasets"""
+     X_0, y_0, X_1, y_1, X_23, y_23 = group_by_PRE_jet_num(X,y)
+     #remove invalid features
+     X_0 = clean_data(X_0, features)
+     X_1 = clean_data(X_1, features)
+     X_23 = clean_data(X_23, features)
+
+     # use feature engineering to get new Xs.
+     #X_0_extended = build_new_x(X_0)
+     #X_1_extended = build_new_x(X_1)
+     #X_23_extended = build_new_x(X_23)
+
+     #standardize the subsets
+     #X_0[0:len(X_0), 0:len(X_0[0])] = standardize(X_0)
+     #X_1[0:len(X_1), 0:len(X_1[0])] = standardize(X_1)
+     #X_23[0:len(X_23), 0:len(X_23[0])] = standardize(X_23)
+     #X_0 = standardize(X_0)
+     #X_1 = standardize(X_1)
+     #X_23 = standardize(X_23)
+     ones = np.ones([len(X_0), 1])
+     X_0 = np.append(ones, X_0, axis = 1)
+     ones = np.ones([len(X_1), 1])
+     X_1 = np.append(ones, X_1, axis = 1)
+     ones = np.ones([len(X_23), 1])
+     X_23 = np.append(ones, X_23, axis = 1)
+
+     X_0 = build_poly(X_0, degree_0)
+     X_1 = build_poly(X_1,degree_1)
+     X_23 = build_poly(X_23, degree_23)
+     
+     return X_0, y_0, X_1, y_1, X_23, y_23
+
+def pre_process_whole_data(X, features: list):
+     """Puts together all the pre-processing steps and returns the 2 processes datasets"""
+     #remove invalid features
+     X = clean_data(X, features)
+     
+     return X
+
