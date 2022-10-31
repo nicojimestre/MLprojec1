@@ -8,7 +8,7 @@ You will find more information about our source codes and methods in this readme
 
 ### Authors
 
-- _Nicolas Jiminez_
+- _Nicolas Jimenez_
 - _Blanche Marion_
 - _Ki Beom Kim_
 
@@ -63,7 +63,7 @@ Below is the list of ML methods that we implemented. These can be found in `impl
    - sqaure-root transform
    - reciprocal transform
 
-4. using `HyperParameterTuner` to tune the hyperparameter of `ridge_regression` model. (hyperparameter: `lambda_`)
+4. using `HyperParameterTuner` to tune the hyperparameter of `ridge_regression` model. (hyperparameter: `lambda_`) Parameter tuning will be done by 5-fold cross-validation. Best parameter will be selected by observing validaiton F1 score.
 
 5. obtain the weight vector w using the trained `lambda_`.
 
